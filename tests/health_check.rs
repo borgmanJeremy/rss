@@ -1,15 +1,27 @@
 use std::net::TcpListener;
 use rss::startup::run;
 use rss::configuration::{get_configuration, DatabaseSettings};
+use rss::telemetry::{get_subscriber, init_subscriber};
 use sqlx::{Connection, Executor, PgPool, PgConnection};
 use uuid::Uuid;
+
 
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
 
+lazy_static::lazy_static! {
+    static ref TRACING: () = {
+        let filter = if std::env::var("TEST_LOG").is_ok(){"debug"} else {""};
+        let subscriber = get_subscriber("test".into(), filter.into());
+        init_subscriber(subscriber);
+    };
+}
+
 async fn spawn_app() -> TestApp {
+    lazy_static::initialize(&TRACING);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{}", port);
@@ -85,7 +97,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 
     assert_eq!(200, response.status().as_u16());
 
-    let saved = sqlx::query!("SELECT email, name FROM subscriptions",)
+    let _saved = sqlx::query!("SELECT email, name FROM subscriptions",)
         .fetch_one(&app.db_pool)
         .await
         .expect("Failed to fetch saved subscription");
