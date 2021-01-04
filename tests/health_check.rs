@@ -1,10 +1,9 @@
-use std::net::TcpListener;
-use rss::startup::run;
 use rss::configuration::{get_configuration, DatabaseSettings};
+use rss::startup::run;
 use rss::telemetry::{get_subscriber, init_subscriber};
-use sqlx::{Connection, Executor, PgPool, PgConnection};
+use sqlx::{Connection, Executor, PgConnection, PgPool};
+use std::net::TcpListener;
 use uuid::Uuid;
-
 
 pub struct TestApp {
     pub address: String,
@@ -80,7 +79,6 @@ async fn health_check_works() {
     assert_eq!(Some(0), response.content_length());
 }
 
-
 #[actix_rt::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     let app = spawn_app().await;
@@ -123,11 +121,14 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_empty() {
             .await
             .expect("Failed to execute request.");
 
-        assert_eq!(400, response.status().as_u16(),
-                   "The API did not return a 400 Bad Request when the payload was {}", description);
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not return a 400 Bad Request when the payload was {}",
+            description
+        );
     }
 }
-
 
 #[actix_rt::test]
 async fn subscribe_returns_a_400_when_data_is_missing() {
@@ -137,7 +138,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
     let test_cases = vec![
         ("name=jeremy", "missing the email"),
         ("email=test%40test.com", "missing the name"),
-        ("", "missing the name and email")
+        ("", "missing the name and email"),
     ];
 
     for (invalid_body, error_message) in test_cases {
@@ -149,7 +150,11 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
             .await
             .expect("Failed to execute request.");
 
-        assert_eq!(400, response.status().as_u16(),
-                   "The API did not fail with 400 when the payload was {}", error_message);
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 when the payload was {}",
+            error_message
+        );
     }
 }

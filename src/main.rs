@@ -1,10 +1,9 @@
-use rss::startup::run;
-use std::net::TcpListener;
 use rss::configuration::get_configuration;
+use rss::startup::run;
 use rss::telemetry::{get_subscriber, init_subscriber};
+use std::net::TcpListener;
 
 use sqlx::postgres::PgPoolOptions;
-
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -18,7 +17,10 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to connect to postgres.");
 
-    let address = format!("{}:{}", configuration.application.host, configuration.application.port);
+    let address = format!(
+        "{}:{}",
+        configuration.application.host, configuration.application.port
+    );
 
     let listener = TcpListener::bind(address)?;
     run(listener, connection_pool)?.await
